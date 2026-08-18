@@ -31,11 +31,21 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLfloat vertices[] = {
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Abajo izquierda
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Abajo derecha
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f // Arriba
+         -0.5f, -0.5f * float(sqrt(3)) / 3.0f, 0.0f,               // Abajo izquierda
+		 0.5f, -0.5f * float(sqrt(3)) / 3.0f, 0.0f,               //  Abajo derecha
+		 0.0f,  0.5f * float(sqrt(3)) * 2.0f / 3.0f, 0.0f,       // Arriba centro
+		 -0.5f / 2.0f,  0.5f * float(sqrt(3)) / 6.0f, 0.0f,       //  Inner left
+		  0.5f / 2.0f,  0.5f * float(sqrt(3)) / 6.0f, 0.0f,       //  Inner right
+		  0.0f,        -0.5f * float(sqrt(3)) / 3.0f, 0.0f        // Inner down
+
 	};
 
+	GLuint indices[] = {
+		0, 3, 5, // Lower left triangle
+		5, 1, 4, // lower right triangle
+		3, 4, 2  // Upper triangle
+
+	};
 	//Crea la ventana con una resolucion de 800x800 y le pone un nombre
     GLFWwindow* window = glfwCreateWindow(800, 800, "Ventanita OpenGL", NULL, NULL);
 	//Check de errores si la ventana no se pudo crear
@@ -70,7 +80,7 @@ int main()
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	//Une el fragment shader source con el fragment shader object
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	//Compila el shader a codigo de maquina pq la maquina no sabe leer xd
+	//Compila el shader a codigo de maquina 
 	glCompileShader(fragmentShader);
 
 	//Crea el objeto shader program y obtiene su referencia
@@ -90,10 +100,11 @@ int main()
 
 
 	//Crea contenedores de referencia para el array de vertices y el array del vertex buffer
-	GLuint VAO, VBO;
+	GLuint VAO, VBO, EBO;
 	//Genera el VAO y el VBO con un solo objeto cada uno
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 
 	//vuelve al VAO el vertex array object actual
 	glBindVertexArray(VAO);
@@ -103,6 +114,9 @@ int main()
 	//introduce los vertices en el VBO
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	//Configura los atributos de los vertices para que OpenGL sepa como interpretar los datos del VBO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	//Activa el atributo de los vertices asi OpenGL sabe como usarlos
@@ -111,6 +125,7 @@ int main()
 	//Vincula el VBO y el VAO a 0 para que no se modifiquen accidentalmente
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	//especifica el color de fondo (r,g,b,a) y limpia el buffer de color
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -129,7 +144,7 @@ int main()
 		glBindVertexArray(VAO);
 		//Ahora si, dibuja el triangulo usando los GL_TRIANGLES primitive
 		// Desde el vertice 0 hasta el vertice 3 (3 vertices)
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		//Se encarga de los eventos de GLFW
 		glfwPollEvents();
@@ -138,9 +153,11 @@ int main()
 	//Borra todos los objetos que hemos creado muejejeje
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 	glDeleteProgram(shaderProgram);
 
 	glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
+	
 }
